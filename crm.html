@@ -7,7 +7,8 @@
     <!-- MUI CSS -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/@mui/material@5.14.0/umd/material-ui.production.min.js">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -27,6 +28,10 @@
             color: white;
             padding: 15px 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
         }
         .sidebar {
             background-color: #ffffff;
@@ -38,10 +43,19 @@
             top: 0;
             padding-top: 70px;
             overflow-y: auto;
+            transition: right 0.3s ease;
+        }
+        .sidebar-hidden {
+            right: -280px;
         }
         .main-content {
             margin-right: 280px;
             padding: 20px;
+            margin-top: 70px;
+            transition: margin-right 0.3s ease;
+        }
+        .main-content-expanded {
+            margin-right: 0;
         }
         .nav-item {
             padding: 12px 20px;
@@ -111,13 +125,20 @@
         .search-bar {
             display: flex;
             margin-bottom: 20px;
+            position: relative;
         }
         .search-bar input {
             flex: 1;
-            padding: 10px 15px;
+            padding: 10px 15px 10px 35px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
+        }
+        .search-bar i {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #666;
         }
         .stats-card {
             text-align: center;
@@ -178,6 +199,88 @@
             color: white;
             border-color: #1976d2;
         }
+        .btn {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #1565c0;
+        }
+        .btn i {
+            margin-left: 5px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .modal-close {
+            cursor: pointer;
+            font-size: 24px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        .form-group textarea {
+            min-height: 100px;
+        }
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        .form-actions button {
+            margin-right: 10px;
+        }
+        .btn-secondary {
+            background-color: #757575;
+        }
+        .btn-secondary:hover {
+            background-color: #616161;
+        }
     </style>
 </head>
 <body>
@@ -185,7 +288,7 @@
     <div class="header">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center;">
-                <i class="material-icons" style="margin-left: 10px;">menu</i>
+                <i class="material-icons menu-toggle" style="margin-left: 10px; cursor: pointer;">menu</i>
                 <h1 style="margin: 0; font-size: 22px;">ניהול תלונות במוקד עירוני</h1>
             </div>
             <div style="display: flex; align-items: center;">
@@ -203,37 +306,37 @@
     </div>
 
     <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="nav-item">
+    <div class="sidebar" id="sidebar">
+        <div class="nav-item" data-section="dashboard">
             <i class="material-icons">dashboard</i>
             <span>דשבורד</span>
         </div>
-        <div class="nav-item" style="background-color: #e3f2fd;">
+        <div class="nav-item active" data-section="complaints">
             <i class="material-icons">report_problem</i>
             <span>ניהול תלונות</span>
         </div>
-        <div class="nav-item">
+        <div class="nav-item" data-section="customers">
             <i class="material-icons">people</i>
             <span>לקוחות</span>
         </div>
-        <div class="nav-item">
+        <div class="nav-item" data-section="map">
             <i class="material-icons">location_on</i>
             <span>מיפוי תלונות</span>
         </div>
-        <div class="nav-item">
+        <div class="nav-item" data-section="reports">
             <i class="material-icons">analytics</i>
             <span>דוחות וסטטיסטיקות</span>
         </div>
-        <div class="nav-item">
+        <div class="nav-item" data-section="settings">
             <i class="material-icons">settings</i>
             <span>הגדרות</span>
         </div>
         <div style="position: absolute; bottom: 20px; right: 20px; width: calc(100% - 40px);">
-            <div class="nav-item">
+            <div class="nav-item" data-section="help">
                 <i class="material-icons">help</i>
                 <span>עזרה ותמיכה</span>
             </div>
-            <div class="nav-item">
+            <div class="nav-item" data-section="logout">
                 <i class="material-icons">logout</i>
                 <span>התנתק</span>
             </div>
@@ -241,11 +344,11 @@
     </div>
 
     <!-- Main Content -->
-    <div class="main-content">
+    <div class="main-content" id="mainContent">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 style="margin: 0;">ניהול תלונות ופניות במוקד העירוני</h2>
-            <button style="background-color: #1976d2; color: white; border: none; padding: 10px 15px; border-radius: 4px; display: flex; align-items: center; cursor: pointer;">
-                <i class="material-icons" style="margin-left: 5px;">add</i>
+            <button class="btn" id="newComplaintBtn">
+                <i class="material-icons">add</i>
                 <span>תלונה חדשה</span>
             </button>
         </div>
@@ -289,36 +392,36 @@
             <div class="card-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
                 <div>
                     <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #666;">סטטוס</label>
-                    <select style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                        <option>הכל</option>
-                        <option>חדש</option>
-                        <option>בטיפול</option>
-                        <option>טופל</option>
+                    <select id="statusFilter" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="all">הכל</option>
+                        <option value="new">חדש</option>
+                        <option value="in-progress">בטיפול</option>
+                        <option value="resolved">טופל</option>
                     </select>
                 </div>
                 <div>
                     <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #666;">עדיפות</label>
-                    <select style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                        <option>הכל</option>
-                        <option>גבוהה</option>
-                        <option>בינונית</option>
-                        <option>נמוכה</option>
+                    <select id="priorityFilter" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="all">הכל</option>
+                        <option value="high">גבוהה</option>
+                        <option value="medium">בינונית</option>
+                        <option value="low">נמוכה</option>
                     </select>
                 </div>
                 <div>
                     <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #666;">קטגוריה</label>
-                    <select style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                        <option>הכל</option>
-                        <option>תשתיות</option>
-                        <option>ניקיון</option>
-                        <option>תחבורה</option>
-                        <option>גינון</option>
-                        <option>רעש</option>
+                    <select id="categoryFilter" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="all">הכל</option>
+                        <option value="infrastructure">תשתיות</option>
+                        <option value="cleaning">ניקיון</option>
+                        <option value="transportation">תחבורה</option>
+                        <option value="gardening">גינון</option>
+                        <option value="noise">רעש</option>
                     </select>
                 </div>
                 <div>
                     <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #666;">תאריך</label>
-                    <input type="date" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="date" id="dateFilter" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
             </div>
         </div>
@@ -328,8 +431,8 @@
             <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <span>רשימת תלונות אחרונות</span>
                 <div class="search-bar" style="width: 300px;">
-                    <input type="text" placeholder="חיפוש תלונות...">
-                    <i class="material-icons" style="position: absolute; margin-right: 10px; margin-top: 10px; color: #666;">search</i>
+                    <input type="text" id="searchInput" placeholder="חיפוש תלונות...">
+                    <i class="material-icons">search</i>
                 </div>
             </div>
             <div class="card-body">
@@ -346,81 +449,17 @@
                             <th>פעולות</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>#1254</td>
-                            <td>בור בכביש ברחוב הרצל</td>
-                            <td>תשתיות</td>
-                            <td>דוד לוי</td>
-                            <td>12/05/2023</td>
-                            <td class="priority-high">גבוהה</td>
-                            <td><span class="status-badge status-in-progress">בטיפול</span></td>
-                            <td>
-                                <i class="material-icons" style="cursor: pointer; color: #1976d2;">visibility</i>
-                                <i class="material-icons" style="cursor: pointer; color: #4caf50; margin-right: 10px;">edit</i>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#1253</td>
-                            <td>פחי אשפה מלאים ברחוב ביאליק</td>
-                            <td>ניקיון</td>
-                            <td>שרה כהן</td>
-                            <td>11/05/2023</td>
-                            <td class="priority-medium">בינונית</td>
-                            <td><span class="status-badge status-new">חדש</span></td>
-                            <td>
-                                <i class="material-icons" style="cursor: pointer; color: #1976d2;">visibility</i>
-                                <i class="material-icons" style="cursor: pointer; color: #4caf50; margin-right: 10px;">edit</i>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#1252</td>
-                            <td>עץ מסוכן בגן הציבורי</td>
-                            <td>גינון</td>
-                            <td>משה פלד</td>
-                            <td>10/05/2023</td>
-                            <td class="priority-high">גבוהה</td>
-                            <td><span class="status-badge status-resolved">טופל</span></td>
-                            <td>
-                                <i class="material-icons" style="cursor: pointer; color: #1976d2;">visibility</i>
-                                <i class="material-icons" style="cursor: pointer; color: #4caf50; margin-right: 10px;">edit</i>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#1251</td>
-                            <td>רעש בנייה בשעות הלילה</td>
-                            <td>רעש</td>
-                            <td>רחל אברהם</td>
-                            <td>09/05/2023</td>
-                            <td class="priority-medium">בינונית</td>
-                            <td><span class="status-badge status-in-progress">בטיפול</span></td>
-                            <td>
-                                <i class="material-icons" style="cursor: pointer; color: #1976d2;">visibility</i>
-                                <i class="material-icons" style="cursor: pointer; color: #4caf50; margin-right: 10px;">edit</i>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#1250</td>
-                            <td>אוטובוס לא עוצר בתחנה</td>
-                            <td>תחבורה</td>
-                            <td>אביב גולן</td>
-                            <td>08/05/2023</td>
-                            <td class="priority-low">נמוכה</td>
-                            <td><span class="status-badge status-resolved">טופל</span></td>
-                            <td>
-                                <i class="material-icons" style="cursor: pointer; color: #1976d2;">visibility</i>
-                                <i class="material-icons" style="cursor: pointer; color: #4caf50; margin-right: 10px;">edit</i>
-                            </td>
-                        </tr>
+                    <tbody id="complaintsTableBody">
+                        <!-- Data will be populated by JavaScript -->
                     </tbody>
                 </table>
                 
                 <div class="pagination">
-                    <button><i class="material-icons">chevron_right</i></button>
-                    <button>3</button>
-                    <button>2</button>
-                    <button class="active">1</button>
-                    <button><i class="material-icons">chevron_left</i></button>
+                    <button id="nextPage"><i class="material-icons">chevron_right</i></button>
+                    <button class="page-btn">3</button>
+                    <button class="page-btn">2</button>
+                    <button class="page-btn active">1</button>
+                    <button id="prevPage"><i class="material-icons">chevron_left</i></button>
                 </div>
             </div>
         </div>
@@ -431,10 +470,7 @@
                 <div class="card-header">תלונות לפי קטגוריה - 30 יום אחרונים</div>
                 <div class="card-body">
                     <div class="chart-container">
-                        <!-- Placeholder for chart -->
-                        <div style="display: flex; justify-content: center; align-items: center; height: 100%; background-color: #f9f9f9; color: #999;">
-                            [גרף תלונות לפי קטגוריה]
-                        </div>
+                        <canvas id="categoryChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -442,12 +478,83 @@
                 <div class="card-header">חלוקת סטטוסים</div>
                 <div class="card-body">
                     <div class="chart-container">
-                        <!-- Placeholder for chart -->
-                        <div style="display: flex; justify-content: center; align-items: center; height: 100%; background-color: #f9f9f9; color: #999;">
-                            [גרף עוגה - חלוקת סטטוסים]
-                        </div>
+                        <canvas id="statusChart"></canvas>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Complaint Modal -->
+    <div class="modal" id="complaintModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="margin: 0;">תלונה חדשה</h3>
+                <span class="modal-close" id="closeModal">&times;</span>
+            </div>
+            <form id="complaintForm">
+                <div class="form-group">
+                    <label for="complaintSubject">נושא התלונה</label>
+                    <input type="text" id="complaintSubject" required>
+                </div>
+                <div class="form-group">
+                    <label for="complaintCategory">קטגוריה</label>
+                    <select id="complaintCategory" required>
+                        <option value="">בחר קטגוריה</option>
+                        <option value="infrastructure">תשתיות</option>
+                        <option value="cleaning">ניקיון</option>
+                        <option value="transportation">תחבורה</option>
+                        <option value="gardening">גינון</option>
+                        <option value="noise">רעש</option>
+                        <option value="other">אחר</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="complaintPriority">עדיפות</label>
+                    <select id="complaintPriority" required>
+                        <option value="">בחר עדיפות</option>
+                        <option value="high">גבוהה</option>
+                        <option value="medium">בינונית</option>
+                        <option value="low">נמוכה</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="complaintReporter">שם המדווח</label>
+                    <input type="text" id="complaintReporter" required>
+                </div>
+                <div class="form-group">
+                    <label for="complaintPhone">טלפון</label>
+                    <input type="tel" id="complaintPhone">
+                </div>
+                <div class="form-group">
+                    <label for="complaintAddress">מיקום</label>
+                    <input type="text" id="complaintAddress" required>
+                </div>
+                <div class="form-group">
+                    <label for="complaintDescription">תיאור</label>
+                    <textarea id="complaintDescription" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelComplaint">ביטול</button>
+                    <button type="submit" class="btn">שמור תלונה</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Complaint Modal -->
+    <div class="modal" id="viewComplaintModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="margin: 0;">פרטי תלונה #<span id="viewComplaintId"></span></h3>
+                <span class="modal-close" id="closeViewModal">&times;</span>
+            </div>
+            <div id="complaintDetails">
+                <!-- Details will be populated by JavaScript -->
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="closeViewBtn">סגור</button>
+                <button type="button" class="btn" id="editComplaintBtn">ערוך</button>
             </div>
         </div>
     </div>
@@ -456,14 +563,467 @@
         // Initialize Lucide icons
         lucide.createIcons();
         
-        // You would add your JavaScript functionality here
-        // For example, handling form submissions, API calls, etc.
-        
-        // Example: Toggle sidebar
-        document.querySelector('.material-icons').addEventListener('click', function() {
-            const sidebar = document.querySelector('.sidebar');
-            sidebar.style.right = sidebar.style.right === '-280px' ? '0' : '-280px';
-        });
+        // Sample data for complaints
+        const complaintsData = [
+            {
+                id: 1254,
+                subject: "בור בכביש ברחוב הרצל",
+                category: "infrastructure",
+                reporter: "דוד לוי",
+                date: "12/05/2023",
+                priority: "high",
+                status: "in-progress",
+                phone: "052-1234567",
+                address: "רחוב הרצל 15",
+                description: "בור גדול בכביש בסמוך לצומת, מסכן את הנהגים ועלול לגרום לתאונה"
+            },
+            {
+                id: 1253,
+                subject: "פחי אשפה מלאים ברחוב ביאליק",
+                category: "cleaning",
+                reporter: "שרה כהן",
+                date: "11/05/2023",
+                priority: "medium",
+                status: "new",
+                phone: "054-7654321",
+                address: "רחוב ביאליק 32",
+                description: "פחי האשפה ברחוב מלאים כבר יומיים ולא מרוקנים"
+            },
+            {
+                id: 1252,
+                subject: "עץ מסוכן בגן הציבורי",
+                category: "gardening",
+                reporter: "משה פלד",
+                date: "10/05/2023",
+                priority: "high",
+                status: "resolved",
+                phone: "050-1122334",
+                address: "גן ציבורי, רחוב הדקל",
+                description: "עץ גדול עם ענפים שבורים שעלולים ליפול על המבקרים בגן"
+            },
+            {
+                id: 1251,
+                subject: "רעש בנייה בשעות הלילה",
+                category: "noise",
+                reporter: "רחל אברהם",
+                date: "09/05/2023",
+                priority: "medium",
+                status: "in-progress",
+                phone: "053-4455667",
+                address: "רחוב הארז 8",
+                description: "עבודות בנייה בשעות הלילה (אחרי 22:00) מפריעות למנוחה"
+            },
+            {
+                id: 1250,
+                subject: "אוטובוס לא עוצר בתחנה",
+                category: "transportation",
+                reporter: "אביב גולן",
+                date: "08/05/2023",
+                priority: "low",
+                status: "resolved",
+                phone: "052-7788990",
+                address: "תחנת האוטובוס ברחוב הברוש",
+                description: "קו 12 לא עוצר בתחנה כבר שבוע למרות שיש נוסעים שמנסים לעלות"
+            },
+            {
+                id: 1249,
+                subject: "תאורת רחוב לא פועלת",
+                category: "infrastructure",
+                reporter: "יעל מור",
+                date: "07/05/2023",
+                priority: "medium",
+                status: "in-progress",
+                phone: "054-3344556",
+                address: "רחוב התמר 12-20",
+                description: "תאורת הרחוב לא פועלת כבר שלושה ימים, האזור חשוך ומסוכן"
+            },
+            {
+                id: 1248,
+                subject: "מדרכה שבורה",
+                category: "infrastructure",
+                reporter: "איתן לוי",
+                date: "06/05/2023",
+                priority: "medium",
+                status: "new",
+                phone: "050-6677889",
+                address: "רחוב הזית 5",
+                description: "חלק מהמדרכה שבור ועלול לגרום למעידות, במיוחד לקשישים"
+            }
+        ];
+
+        // Sample data for charts
+        const categoryData = {
+            labels: ["תשתיות", "ניקיון", "תחבורה", "גינון", "רעש"],
+            datasets: [{
+                label: 'מספר תלונות',
+                data: [42, 28, 15, 20, 12],
+                backgroundColor: [
+                    '#2196F3',
+                    '#FF9800',
+                    '#4CAF50',
+                    '#9C27B0',
+                    '#F44336'
+                ],
+                borderWidth: 1
+            }]
+        };
+
+        const statusData = {
+            labels: ["חדש", "בטיפול", "טופל"],
+            datasets: [{
+                data: [24, 56, 42],
+                backgroundColor: [
+                    '#FFEB3B',
+                    '#2196F3',
+                    '#4CAF50'
+                ],
+                borderWidth: 1
+            }]
+        };
+
+        // Initialize charts
+        let categoryChart, statusChart;
+
+        function initCharts() {
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            categoryChart = new Chart(categoryCtx, {
+                type: 'bar',
+                data: categoryData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            statusChart = new Chart(statusCtx, {
+                type: 'pie',
+                data: statusData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'left'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render complaints table
+        function renderComplaintsTable(complaints) {
+            const tableBody = document.getElementById('complaintsTableBody');
+            tableBody.innerHTML = '';
+
+            complaints.forEach(complaint => {
+                const row = document.createElement('tr');
+                
+                // Determine status badge class
+                let statusClass, statusText;
+                switch(complaint.status) {
+                    case 'new':
+                        statusClass = 'status-new';
+                        statusText = 'חדש';
+                        break;
+                    case 'in-progress':
+                        statusClass = 'status-in-progress';
+                        statusText = 'בטיפול';
+                        break;
+                    case 'resolved':
+                        statusClass = 'status-resolved';
+                        statusText = 'טופל';
+                        break;
+                }
+
+                // Determine priority class
+                let priorityClass;
+                switch(complaint.priority) {
+                    case 'high':
+                        priorityClass = 'priority-high';
+                        break;
+                    case 'medium':
+                        priorityClass = 'priority-medium';
+                        break;
+                    case 'low':
+                        priorityClass = 'priority-low';
+                        break;
+                }
+
+                row.innerHTML = `
+                    <td>#${complaint.id}</td>
+                    <td>${complaint.subject}</td>
+                    <td>${getCategoryName(complaint.category)}</td>
+                    <td>${complaint.reporter}</td>
+                    <td>${complaint.date}</td>
+                    <td class="${priorityClass}">${getPriorityName(complaint.priority)}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>
+                        <i class="material-icons view-btn" data-id="${complaint.id}" style="cursor: pointer; color: #1976d2;">visibility</i>
+                        <i class="material-icons edit-btn" data-id="${complaint.id}" style="cursor: pointer; color: #4caf50; margin-right: 10px;">edit</i>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Add event listeners to view buttons
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const complaintId = parseInt(this.getAttribute('data-id'));
+                    viewComplaint(complaintId);
+                });
+            });
+
+            // Add event listeners to edit buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const complaintId = parseInt(this.getAttribute('data-id'));
+                    editComplaint(complaintId);
+                });
+            });
+        }
+
+        function getCategoryName(categoryKey) {
+            const categories = {
+                'infrastructure': 'תשתיות',
+                'cleaning': 'ניקיון',
+                'transportation': 'תחבורה',
+                'gardening': 'גינון',
+                'noise': 'רעש'
+            };
+            return categories[categoryKey] || categoryKey;
+        }
+
+        function getPriorityName(priorityKey) {
+            const priorities = {
+                'high': 'גבוהה',
+                'medium': 'בינונית',
+                'low': 'נמוכה'
+            };
+            return priorities[priorityKey] || priorityKey;
+        }
+
+        // Filter complaints based on filters
+        function filterComplaints() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const priorityFilter = document.getElementById('priorityFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            let filtered = [...complaintsData];
+
+            if (statusFilter !== 'all') {
+                filtered = filtered.filter(c => c.status === statusFilter);
+            }
+
+            if (priorityFilter !== 'all') {
+                filtered = filtered.filter(c => c.priority === priorityFilter);
+            }
+
+            if (categoryFilter !== 'all') {
+                filtered = filtered.filter(c => c.category === categoryFilter);
+            }
+
+            if (dateFilter) {
+                // Simple date filter - in a real app you'd want to parse dates properly
+                filtered = filtered.filter(c => c.date.includes(dateFilter));
+            }
+
+            if (searchTerm) {
+                filtered = filtered.filter(c => 
+                    c.subject.toLowerCase().includes(searchTerm) || 
+                    c.reporter.toLowerCase().includes(searchTerm) ||
+                    c.address.toLowerCase().includes(searchTerm) ||
+                    c.description.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            renderComplaintsTable(filtered);
+        }
+
+        // View complaint details
+        function viewComplaint(complaintId) {
+            const complaint = complaintsData.find(c => c.id === complaintId);
+            if (!complaint) return;
+
+            document.getElementById('viewComplaintId').textContent = complaint.id;
+            
+            const detailsDiv = document.getElementById('complaintDetails');
+            detailsDiv.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 5px;">${complaint.subject}</h4>
+                    <div style="color: #666; font-size: 14px;">${complaint.date}</div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div>
+                        <div style="font-weight: 500; margin-bottom: 5px;">קטגוריה</div>
+                        <div>${getCategoryName(complaint.category)}</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 500; margin-bottom: 5px;">עדיפות</div>
+                        <div class="${complaint.priority === 'high' ? 'priority-high' : complaint.priority === 'medium' ? 'priority-medium' : 'priority-low'}">
+                            ${getPriorityName(complaint.priority)}
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 500; margin-bottom: 5px;">מדווח</div>
+                        <div>${complaint.reporter}</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 500; margin-bottom: 5px;">טלפון</div>
+                        <div>${complaint.phone}</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <div style="font-weight: 500; margin-bottom: 5px;">מיקום</div>
+                    <div>${complaint.address}</div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <div style="font-weight: 500; margin-bottom: 5px;">תיאור</div>
+                    <div>${complaint.description}</div>
+                </div>
+                
+                <div>
+                    <div style="font-weight: 500; margin-bottom: 5px;">סטטוס</div>
+                    <span class="status-badge ${complaint.status === 'new' ? 'status-new' : complaint.status === 'in-progress' ? 'status-in-progress' : 'status-resolved'}">
+                        ${complaint.status === 'new' ? 'חדש' : complaint.status === 'in-progress' ? 'בטיפול' : 'טופל'}
+                    </span>
+                </div>
+            `;
+
+            document.getElementById('viewComplaintModal').style.display = 'flex';
+        }
+
+        // Edit complaint
+        function editComplaint(complaintId) {
+            // In a real app, this would open the edit form with the complaint data
+            alert(`עריכת תלונה #${complaintId} - פונקציונליות זו תיושם ביישום המלא`);
+        }
+
+        // Initialize the page
+        function init() {
+            // Render initial data
+            renderComplaintsTable(complaintsData);
+            initCharts();
+
+            // Add event listeners for filters
+            document.getElementById('statusFilter').addEventListener('change', filterComplaints);
+            document.getElementById('priorityFilter').addEventListener('change', filterComplaints);
+            document.getElementById('categoryFilter').addEventListener('change', filterComplaints);
+            document.getElementById('dateFilter').addEventListener('change', filterComplaints);
+            document.getElementById('searchInput').addEventListener('input', filterComplaints);
+
+            // Toggle sidebar
+            document.querySelector('.menu-toggle').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('sidebar-hidden');
+                document.getElementById('mainContent').classList.toggle('main-content-expanded');
+            });
+
+            // New complaint button
+            document.getElementById('newComplaintBtn').addEventListener('click', function() {
+                document.getElementById('complaintModal').style.display = 'flex';
+            });
+
+            // Close modals
+            document.getElementById('closeModal').addEventListener('click', function() {
+                document.getElementById('complaintModal').style.display = 'none';
+            });
+
+            document.getElementById('closeViewModal').addEventListener('click', function() {
+                document.getElementById('viewComplaintModal').style.display = 'none';
+            });
+
+            document.getElementById('closeViewBtn').addEventListener('click', function() {
+                document.getElementById('viewComplaintModal').style.display = 'none';
+            });
+
+            document.getElementById('cancelComplaint').addEventListener('click', function() {
+                document.getElementById('complaintModal').style.display = 'none';
+            });
+
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target === document.getElementById('complaintModal')) {
+                    document.getElementById('complaintModal').style.display = 'none';
+                }
+                if (event.target === document.getElementById('viewComplaintModal')) {
+                    document.getElementById('viewComplaintModal').style.display = 'none';
+                }
+            });
+
+            // Form submission
+            document.getElementById('complaintForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // In a real app, you would send this to your backend
+                const newComplaint = {
+                    id: Math.floor(Math.random() * 1000) + 1255,
+                    subject: document.getElementById('complaintSubject').value,
+                    category: document.getElementById('complaintCategory').value,
+                    priority: document.getElementById('complaintPriority').value,
+                    reporter: document.getElementById('complaintReporter').value,
+                    phone: document.getElementById('complaintPhone').value,
+                    address: document.getElementById('complaintAddress').value,
+                    description: document.getElementById('complaintDescription').value,
+                    date: new Date().toLocaleDateString('he-IL'),
+                    status: 'new'
+                };
+                
+                complaintsData.unshift(newComplaint);
+                renderComplaintsTable(complaintsData);
+                document.getElementById('complaintModal').style.display = 'none';
+                this.reset();
+                
+                alert(`תלונה #${newComplaint.id} נוצרה בהצלחה!`);
+            });
+
+            // Pagination buttons
+            document.getElementById('prevPage').addEventListener('click', function() {
+                alert('עבור לדף הקודם - פונקציונליות זו תיושם ביישום המלא');
+            });
+
+            document.getElementById('nextPage').addEventListener('click', function() {
+                alert('עבור לדף הבא - פונקציונליות זו תיושם ביישום המלא');
+            });
+
+            // Edit complaint button in view modal
+            document.getElementById('editComplaintBtn').addEventListener('click', function() {
+                const complaintId = parseInt(document.getElementById('viewComplaintId').textContent);
+                editComplaint(complaintId);
+                document.getElementById('viewComplaintModal').style.display = 'none';
+            });
+
+            // Navigation items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const section = this.getAttribute('data-section');
+                    if (section === 'logout') {
+                        if (confirm('האם אתה בטוח שברצונך להתנתק?')) {
+                            alert('התנתקות מבוצעת - ביישום אמיתי זה יפנה אותך לדף ההתחברות');
+                        }
+                    } else {
+                        alert(`ניווט לסעיף ${section} - פונקציונליות זו תיושם ביישום המלא`);
+                    }
+                });
+            });
+        }
+
+        // Initialize the application when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
