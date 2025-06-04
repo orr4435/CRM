@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניהול תלונות במוקד עירוני</title>
+    <!-- MUI CSS -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/@mui/material@5.14.0/umd/material-ui.production.min.js">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        .rtl-text {
+            direction: rtl;
+            text-align: right;
+        }
+        .header {
+            background-color: #1976d2;
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .sidebar {
+            background-color: #ffffff;
+            width: 280px;
+            height: 100vh;
+            position: fixed;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            right: 0;
+            top: 0;
+            padding-top: 70px;
+            overflow-y: auto;
+        }
+        .main-content {
+            margin-right: 280px;
+            padding: 20px;
+        }
+        .nav-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .nav-item:hover {
+            background-color: #f0f0f0;
+        }
+        .nav-item i {
+            margin-left: 10px;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            font-weight: 500;
+            background-color: #f9f9f9;
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .complaint-item {
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+        }
+        .complaint-item:last-child {
+            border-bottom: none;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-new {
+            background-color: #ffeb3b;
+            color: #ff6d00;
+        }
+        .status-in-progress {
+            background-color: #2196f3;
+            color: white;
+        }
+        .status-resolved {
+            background-color: #4caf50;
+            color: white;
+        }
+        .priority-high {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .priority-medium {
+            color: #ff9800;
+        }
+        .priority-low {
+            color: #8bc34a;
+        }
+        .search-bar {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .search-bar input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .stats-card {
+            text-align: center;
+            padding: 20px;
+        }
+        .stats-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        .stats-card .label {
+            color: #666;
+            font-size: 14px;
+        }
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            font-weight: bold;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table th, .data-table td {
+            padding: 12px 15px;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+        }
+        .data-table th {
+            background-color: #f5f5f5;
+            font-weight: 500;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            padding: 20px 0;
+        }
+        .pagination button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            background-color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .pagination button.active {
+            background-color: #1976d2;
+            color: white;
+            border-color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center;">
+                <i class="material-icons" style="margin-left: 10px;">menu</i>
+                <h1 style="margin: 0; font-size: 22px;">ניהול תלונות במוקד עירוני</h1>
+            </div>
+            <div style="display: flex; align-items: center;">
+                <div style="margin-left: 20px; position: relative;">
+                    <i class="material-icons">notifications</i>
+                    <span style="position: absolute; top: -5px; left: -5px; background-color: #f44336; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px;">3</span>
+                </div>
+                <div style="margin-right: 20px; display: flex; align-items: center;">
+                    <div class="user-avatar">י"א</div>
+                    <span style="margin-right: 10px;">מנהל מערכת</span>
+                    <i class="material-icons">arrow_drop_down</i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="nav-item">
+            <i class="material-icons">dashboard</i>
+            <span>דשבורד</span>
+        </div>
+        <div class="nav-item" style="background-color: #e3f2fd;">
+            <i class="material-icons">report_problem</i>
+            <span>ניהול תלונות</span>
+        </div>
+        <div class="nav-item">
+            <i class="material-icons">people</i>
+            <span>לקוחות</span>
+        </div>
+        <div class="nav-item">
+            <i class="material-icons">location_on</i>
+            <span>מיפוי תלונות</span>
+        </div>
+        <div class="nav-item">
+            <i class="material-icons">analytics</i>
+            <span>דוחות וסטטיסטיקות</span>
+        </div>
+        <div class="nav-item">
+            <i class="material-icons">settings</i>
+            <span>הגדרות</span>
+        </div>
+        <div style="position: absolute; bottom: 20px; right: 20px; width: calc(100% - 40px);">
+            <div class="nav-item">
+                <i class="material-icons">help</i>
+                <span>עזרה ותמיכה</span>
+            </div>
+            <div class="nav-item">
+                <i class="material-icons">logout</i>
+                <span>התנתק</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0;">ניהול תלונות ופניות במוקד העירוני</h2>
+            <button style="background-color: #1976d2; color: white; border: none; padding: 10px 15px; border-radius: 4px; display: flex; align-items: center; cursor: pointer;">
+                <i class="material-icons" style="margin-left: 5px;">add</i>
+                <span>תלונה חדשה</span>
+            </button>
+        </div>
+
+        <!-- Quick Stats -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">
+            <div class="card stats-card">
+                <div class="label">תלונות חדשות</div>
+                <div class="value">24</div>
+                <div style="color: #2196f3; display: flex; align-items: center; justify-content: center;">
+                    <i class="material-icons" style="font-size: 16px; margin-left: 3px;">arrow_upward</i>
+                    <span style="font-size: 12px;">12% מהשבוע שעבר</span>
+                </div>
+            </div>
+            <div class="card stats-card">
+                <div class="label">בטיפול</div>
+                <div class="value">56</div>
+                <div style="color: #ff9800; display: flex; align-items: center; justify-content: center;">
+                    <i class="material-icons" style="font-size: 16px; margin-left: 3px;">trending_flat</i>
+                    <span style="font-size: 12px;">זהה לשבוע שעבר</span>
+                </div>
+            </div>
+            <div class="card stats-card">
+                <div class="label">טופלו השבוע</div>
+                <div class="value">42</div>
+                <div style="color: #4caf50; display: flex; align-items: center; justify-content: center;">
+                    <i class="material-icons" style="font-size: 16px; margin-left: 3px;">arrow_upward</i>
+                    <span style="font-size: 12px;">8% מהשבוע שעבר</span>
+                </div>
+            </div>
+            <div class="card stats-card">
+                <div class="label">זמן טיפול ממוצע</div>
+                <div class="value">2.3</div>
+                <div class="label">ימים</div>
+            </div>
+        </div>
+
+        <!-- Filters and Search -->
+        <div class="card" style="margin-bottom: 20px;">
+            <div class="card-header">סינון תלונות</div>
+            <div class="card-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #666;">סטטוס</label>
+                    <select style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option>הכל</option>
+                        <option>חדש</option>
+                        <option>בטיפול</option>
+                        <option>טופל</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #666;">עדיפות</label>
+                    <select style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option>הכל</option>
+                        <option>גבוהה</option>
+                        <option>בינונית</option>
+                        <option>נמוכה</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #666;">קטגוריה</label>
+                    <select style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option>הכל</option>
+                        <option>תשתיות</option>
+                        <option>ניקיון</option>
+                        <option>תחבורה</option>
+                        <option>גינון</option>
+                        <option>רעש</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #666;">תאריך</label>
+                    <input type="date" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Complaints List -->
+        <div class="card">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>רשימת תלונות אחרונות</span>
+                <div class="search-bar" style="width: 300px;">
+                    <input type="text" placeholder="חיפוש תלונות...">
+                    <i class="material-icons" style="position: absolute; margin-right: 10px; margin-top: 10px; color: #666;">search</i>
+                </div>
+            </div>
+            <div class="card-body">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>מספר תלונה</th>
+                            <th>נושא</th>
+                            <th>קטגוריה</th>
+                            <th>דיווח על ידי</th>
+                            <th>תאריך</th>
+                            <th>עדיפות</th>
+                            <th>סטטוס</th>
+                            <th>פעולות</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>#1254</td>
+                            <td>בור בכביש ברחוב הרצל</td>
+                            <td>תשתיות</td>
+                            <td>דוד לוי</td>
+                            <td>12/05/2023</td>
+                            <td class="priority-high">גבוהה</td>
+                            <td><span class="status-badge status-in-progress">בטיפול</span></td>
+                            <td>
+                                <i class="material-icons" style="cursor: pointer; color: #1976d2;">visibility</i>
+                                <i class="material-icons" style="cursor: pointer; color: #4caf50; margin-right: 10px;">edit</i>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#1253</td>
+                            <td>פחי אשפה מלאים ברחוב ביאליק</td>
+                            <td>ניקיון</td>
+                            <td>שרה כהן</td>
+                            <td>11/05/2023</td>
+                            <td class="priority-medium">בינונית</td>
+                            <td><span class="status-badge status-new">חדש</span></td>
+                            <td>
+                                <i class="material-icons" style="cursor: pointer; color: #1976d2;">visibility</i>
+                                <i class="material-icons" style="cursor: pointer; color: #4caf50; margin-right: 10px;">edit</i>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#1252</td>
+                            <td>עץ מסוכן בגן הציבורי</td>
+                            <td>גינון</td>
+                            <td>משה פלד</td>
+                            <td>10/05/2023</td>
+                            <td class="priority-high">גבוהה</td>
+                            <td><span class="status-badge status-resolved">טופל</span></td>
+                            <td>
+                                <i class="material-icons" style="cursor: pointer; color: #1976d2;">visibility</i>
+                                <i class="material-icons" style="cursor: pointer; color: #4caf50; margin-right: 10px;">edit</i>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#1251</td>
+                            <td>רעש בנייה בשעות הלילה</td>
+                            <td>רעש</td>
+                            <td>רחל אברהם</td>
+                            <td>09/05/2023</td>
+                            <td class="priority-medium">בינונית</td>
+                            <td><span class="status-badge status-in-progress">בטיפול</span></td>
+                            <td>
+                                <i class="material-icons" style="cursor: pointer; color: #1976d2;">visibility</i>
+                                <i class="material-icons" style="cursor: pointer; color: #4caf50; margin-right: 10px;">edit</i>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#1250</td>
+                            <td>אוטובוס לא עוצר בתחנה</td>
+                            <td>תחבורה</td>
+                            <td>אביב גולן</td>
+                            <td>08/05/2023</td>
+                            <td class="priority-low">נמוכה</td>
+                            <td><span class="status-badge status-resolved">טופל</span></td>
+                            <td>
+                                <i class="material-icons" style="cursor: pointer; color: #1976d2;">visibility</i>
+                                <i class="material-icons" style="cursor: pointer; color: #4caf50; margin-right: 10px;">edit</i>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="pagination">
+                    <button><i class="material-icons">chevron_right</i></button>
+                    <button>3</button>
+                    <button>2</button>
+                    <button class="active">1</button>
+                    <button><i class="material-icons">chevron_left</i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 20px;">
+            <div class="card">
+                <div class="card-header">תלונות לפי קטגוריה - 30 יום אחרונים</div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <!-- Placeholder for chart -->
+                        <div style="display: flex; justify-content: center; align-items: center; height: 100%; background-color: #f9f9f9; color: #999;">
+                            [גרף תלונות לפי קטגוריה]
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">חלוקת סטטוסים</div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <!-- Placeholder for chart -->
+                        <div style="display: flex; justify-content: center; align-items: center; height: 100%; background-color: #f9f9f9; color: #999;">
+                            [גרף עוגה - חלוקת סטטוסים]
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // You would add your JavaScript functionality here
+        // For example, handling form submissions, API calls, etc.
+        
+        // Example: Toggle sidebar
+        document.querySelector('.material-icons').addEventListener('click', function() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.style.right = sidebar.style.right === '-280px' ? '0' : '-280px';
+        });
+    </script>
+</body>
+</html>
